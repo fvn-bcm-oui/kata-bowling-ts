@@ -1,104 +1,69 @@
-import { Game } from './Game';
+import Game from './Game';
 
 describe('Game', () => {
-  it("should give 0 score when player hasn't played yet", () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    const answer = game.score();
-
-    // Assert
-    expect(answer).toBe(0);
-  });
-
-  it('should give > 0 score when pins have fell', () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    game.roll(5);
-    const answer = game.score();
-
-    // Assert
-    expect(answer).toBe(5);
-  });
-
-  it('should sum pins down when player rolls twice', () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    game.roll(4);
-    game.roll(5);
-    const answer = game.score();
-
-    // Assert
-    expect(answer).toBe(9);
-  });
-
-  it('should throw exception when number of pins is negative', () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    expect(() => game.roll(-1)).toThrow('Invalid number of pins: -1');
-  });
-
-  it('should throw exception when number of pins is greater than 10', () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    expect(() => game.roll(11)).toThrow('Invalid number of pins: 11');
-  });
-
-  it('should throw exception when number of pins is greater than number of pins up', () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    game.roll(5);
-    expect(() => game.roll(6)).toThrow(
-      'Number of pins is more than pins up: 6 > 5'
-    );
-  });
-
-  it('should throw exception when number of pins is greater than number of pins up', () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    game.roll(4);
-    game.roll(4);
-    game.roll(4);
-
-    // Assert
-    expect(game.score()).toBe(12);
-  });
-
-  it('should continue the game when last roll has not been played', () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    game.roll(4);
-
-    // Assert
-    expect(game.isFinished()).toBeFalsy();
-  });
-
-  it('should finish the game when last roll has been played', () => {
-    // Arrange
-    const game = new Game();
-
-    // Act
-    for (let i = 0; i < 10; i++) {
-      game.roll(4);
-      game.roll(4);
+  const rollHelper = (
+    game: Game,
+    rounds: number,
+    pinsKnocked: number
+  ): void => {
+    for (let i = 0; i < rounds; i++) {
+      game.roll(pinsKnocked);
     }
+  };
+  it('should score 0 when rolling all gutters', () => {
+    const game = new Game();
 
-    // Assert
-    expect(game.isFinished()).toBeTruthy();
+    rollHelper(game, 20, 0);
+
+    expect(game.score()).toEqual(0);
+  });
+
+  it('Should score 20 when knocking all ones', () => {
+    const game = new Game();
+
+    rollHelper(game, 20, 1);
+
+    expect(game.score()).toEqual(20);
+  });
+
+  it('Should score ?? when all gutters but last frame is a spare ', () => {
+    const game = new Game();
+
+    game.roll(5); // score(0) = 5 // scoreCumul(0) = 5
+    game.roll(5); // score(1) = 5 + x // scoreCumul(1) = ???
+    game.roll(6); // score(2) = x = 6 // scoreCumul(2) = 22
+    rollHelper(game, 17, 0);
+
+    expect(game.score()).toEqual(22);
+  });
+
+  it('Should score ?? when 2 rolls in a row makes 10 but there is no spare (not in same frame)', () => {
+    const game = new Game();
+
+    game.roll(0);
+    game.roll(5);
+    game.roll(5);
+    game.roll(4);
+    rollHelper(game, 16, 0);
+
+    expect(game.score()).toEqual(14);
+  });
+
+  it('Should score 10 when 1 strike and all gutters', () => {
+    const game = new Game();
+
+    game.roll(10);
+    rollHelper(game, 18, 0);
+
+    expect(game.score()).toEqual(10);
+  });
+
+  it('Should score ?? when 1 strike and all ones', () => {
+    const game = new Game();
+
+    game.roll(10);
+    rollHelper(game, 18, 1);
+
+    expect(game.score()).toEqual(10 + 2 * 2 + 16 * 1);
   });
 });

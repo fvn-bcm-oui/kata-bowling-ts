@@ -1,58 +1,63 @@
-enum Roll {
-  First = 0,
-  Second = 1,
-}
+export default class Game {
+  private rolls: number[];
 
-const MAX_PINS = 10;
-
-export class Game {
-  private totalScore: number;
-  private pinsUp: number;
-  private currentRoll: Roll;
-  private currentFrame: number;
-
-  constructor() {
-    this.totalScore = 0;
-    this.pinsUp = MAX_PINS;
-    this.currentRoll = 0;
-    this.currentFrame = 0;
+  public constructor() {
+    this.rolls = [];
   }
 
-  public isFinished(): boolean {
-		return this.currentFrame > 9;
-  }
-
-  public roll(pins: number): void {
-    if (pins < 0 || pins > MAX_PINS) {
-      throw new Error(`Invalid number of pins: ${pins}`);
-    }
-
-    if (pins > this.pinsUp) {
-      throw new Error(
-        `Number of pins is more than pins up: ${pins} > ${this.pinsUp}`
-      );
-    }
-    this.totalScore += pins;
-    this.pinsUp -= pins;
-
-    this.nextRoll();
+  public roll(knockedPins: number): void {
+    this.rolls.push(knockedPins);
   }
 
   public score(): number {
-    return this.totalScore;
-  }
+    let score = 0;
 
-  private resetPins() {
-    this.pinsUp = MAX_PINS;
-  }
-
-  private nextRoll() {
-    if (this.currentRoll === Roll.Second) {
-      this.currentRoll = Roll.First;
-      this.resetPins();
-      this.currentFrame += 1;
-    } else {
-      this.currentRoll = Roll.Second;
+    let rollsIndex = 0;
+    for (let frameIndex = 0; frameIndex < 10; frameIndex++) {
+      const frame = new Frame(this.rolls[rollsIndex], this.rolls[rollsIndex + 1]);
+      if (frame.isStrike()) {
+        score += this.scoreAStrike(rollsIndex);
+        rollsIndex += 1;
+      } else if (this.isSpare(rollsIndex)) {
+        score += this.scoreASpare(rollsIndex);
+        rollsIndex += 2;
+      } else {
+        score += this.scoreDefault(rollsIndex);
+        rollsIndex += 2;
+      }
     }
+
+    return score;
   }
+
+  private scoreAStrike(rollsIndex: number) {
+    return this.rolls[rollsIndex] + this.rolls[rollsIndex + 1] + this.rolls[rollsIndex + 2];
+  }
+
+  private isStrike(rollsIndex: number) {
+    return this.rolls[rollsIndex] === 10;
+  }
+
+  private scoreDefault(rollsIndex: number) {
+    return this.rolls[rollsIndex] + this.rolls[rollsIndex + 1];
+  }
+
+  private isSpare(rollsIndex: number): boolean {
+    return (this.rolls[rollsIndex] + this.rolls[rollsIndex + 1]) === 10;
+  }
+
+  private scoreASpare(rollsIndex: number): number {
+    return this.rolls[rollsIndex] + this.rolls[rollsIndex + 1] + this.rolls[rollsIndex + 2];
+  }
+
+}
+
+class Frame {
+
+  public constructor(private firstRollKnokPins: number, private secondRollKnokPins: number) {}
+
+  public isStrike(): boolean {
+    return this.firstRollKnokPins === 10;
+  }
+
 }
