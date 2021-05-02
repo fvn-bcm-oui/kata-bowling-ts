@@ -1,4 +1,58 @@
-export default class Game {
+type Spare = {
+    kind: "spare";
+    pinsDownAtFirstThrow: number;
+    pinsDownAtSecondThrow: number;
+};
+
+type Strike = {
+    kind: "strike";
+};
+
+type Normal = {
+    kind: "normal";
+    pinsDownAtFirstThrow: number;
+    pinsDownAtSecondThrow: number;
+};
+
+type Frame = Normal | Strike | Spare;
+
+const createFrame = (rolls: number[], rollsIndex: number): Frame => {
+	if (rolls[rollsIndex] === 10)
+		return { kind: "strike"}
+	if (rolls[rollsIndex] + rolls[rollsIndex + 1] === 10) {
+		return {
+			kind: "spare",
+			pinsDownAtFirstThrow: rolls[rollsIndex],
+			pinsDownAtSecondThrow: rolls[rollsIndex + 1]
+		}
+	}
+	return {
+		kind: "normal",
+		pinsDownAtFirstThrow: rolls[rollsIndex],
+		pinsDownAtSecondThrow: rolls[rollsIndex + 1]
+	};
+}
+
+const frameScore =
+	(rolls: number[], rollsIndex: number, frame: Frame) => {
+		switch (frame.kind) {
+			case "strike":
+				return rolls[rollsIndex + 1] + rolls[rollsIndex + 2];
+			case "spare":
+				return rolls[rollsIndex] + rolls[rollsIndex + 1] + rolls[rollsIndex + 2];
+			case "normal":
+				return rolls[rollsIndex] + rolls[rollsIndex + 1];
+		}
+	};
+
+const nextTurn = (frame: Frame, rollsIndex: number) => {
+	switch(frame.kind) {
+		case 'strike': return rollsIndex + 1;
+		default: return rollsIndex + 2;
+	}
+}
+
+export class Game {
   private rolls: number[];
 
   public constructor() {
@@ -14,50 +68,11 @@ export default class Game {
 
     let rollsIndex = 0;
     for (let frameIndex = 0; frameIndex < 10; frameIndex++) {
-      const frame = new Frame(this.rolls[rollsIndex], this.rolls[rollsIndex + 1]);
-      if (frame.isStrike()) {
-        score += this.scoreAStrike(rollsIndex);
-        rollsIndex += 1;
-      } else if (this.isSpare(rollsIndex)) {
-        score += this.scoreASpare(rollsIndex);
-        rollsIndex += 2;
-      } else {
-        score += this.scoreDefault(rollsIndex);
-        rollsIndex += 2;
-      }
+    	const frame = createFrame(this.rolls, rollsIndex);
+    	score += frameScore(this.rolls, rollsIndex, frame);
+			rollsIndex = nextTurn(frame, rollsIndex)
     }
 
     return score;
   }
-
-  private scoreAStrike(rollsIndex: number) {
-    return this.rolls[rollsIndex] + this.rolls[rollsIndex + 1] + this.rolls[rollsIndex + 2];
-  }
-
-  private isStrike(rollsIndex: number) {
-    return this.rolls[rollsIndex] === 10;
-  }
-
-  private scoreDefault(rollsIndex: number) {
-    return this.rolls[rollsIndex] + this.rolls[rollsIndex + 1];
-  }
-
-  private isSpare(rollsIndex: number): boolean {
-    return (this.rolls[rollsIndex] + this.rolls[rollsIndex + 1]) === 10;
-  }
-
-  private scoreASpare(rollsIndex: number): number {
-    return this.rolls[rollsIndex] + this.rolls[rollsIndex + 1] + this.rolls[rollsIndex + 2];
-  }
-
-}
-
-class Frame {
-
-  public constructor(private firstRollKnokPins: number, private secondRollKnokPins: number) {}
-
-  public isStrike(): boolean {
-    return this.firstRollKnokPins === 10;
-  }
-
 }

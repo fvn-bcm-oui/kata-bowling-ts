@@ -1,4 +1,5 @@
-import Game from './Game';
+// @ts-ignore
+import { Game } from './Game';
 
 describe('Game', () => {
   const rollHelper = (
